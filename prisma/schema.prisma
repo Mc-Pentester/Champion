@@ -1,0 +1,309 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS (as strings for SQLite compatibility)
+// ============================================
+
+// UserRole: USER, ADMIN, MODERATOR
+// QuestionSource: MANUAL, SYSTEM, AI
+// QuestionStatus: DRAFT, REVIEW, APPROVED, REJECTED, ARCHIVED
+// QuestionType: MULTIPLE_CHOICE, TRUE_FALSE, TEXT_INPUT, RIDDLE, TRANSLATION, FILL_BLANK, ORDERING, MATCHING
+// Difficulty: BEGINNER, EASY, MEDIUM, HARD, EXPERT, MASTER, LEGEND
+// Language: FR, HT, EN, ES
+// GameStatus: IN_PROGRESS, COMPLETED, ABANDONED
+// GameType: QUIZ, RIDDLE, SUDOKU, ENIGMA
+// SudokuSize: SUDOKU_4X4, SUDOKU_6X6, SUDOKU_9X9
+// BadgeType: FIRST_WIN, STREAK_5, STREAK_10, PERFECT_SCORE, CATEGORY_MASTER, SPEED_DEMON, PUZZLE_MASTER
+// LeaderboardType: DAILY, WEEKLY, MONTHLY, ALL_TIME, FRIENDS, GLOBAL, CATEGORY
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          String    @default("USER") // USER, ADMIN, MODERATOR
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  gameSessions      GameSession[]
+  progression       Progression?
+  badges            UserBadge[]
+  leaderboardEntries LeaderboardEntry[]
+  createdQuestions  Question[]      @relation("CreatedBy")
+  validatedQuestions Question[]      @relation("ValidatedBy")
+  createdQuizzes     Quiz[]
+  sudokuSessions    SudokuGameSession[]
+}
+
+// ============================================
+// PROGRESSION SYSTEM
+// ============================================
+
+model Progression {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  xp          Int      @default(0)
+  level       Int      @default(1)
+  streak      Int      @default(0)
+  lastPlayedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Badge {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  type        String     // FIRST_WIN, STREAK_5, etc.
+  icon        String?
+  criteria    String     // JSON string for criteria
+  createdAt   DateTime  @default(now())
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+// ============================================
+// QUESTION SYSTEM
+// ============================================
+
+model Question {
+  id           String   @id @default(cuid())
+  source       String   // MANUAL, SYSTEM, AI
+  status       String   @default("DRAFT") // DRAFT, REVIEW, APPROVED, REJECTED, ARCHIVED
+  type         String   // MULTIPLE_CHOICE, TRUE_FALSE, TEXT_INPUT, RIDDLE, TRANSLATION, FILL_BLANK, ORDERING, MATCHING
+  category     String
+  subcategory  String?
+  difficulty   String   // BEGINNER, EASY, MEDIUM, HARD, EXPERT, MASTER, LEGEND
+  language     String   @default("FR") // FR, HT, EN, ES
+  questionText String
+  explanation  String?
+  points       Int      @default(10)
+  timeLimit    Int?     // in seconds
+
+  // Validation fields
+  createdBy    String?
+  validatedBy  String?
+  validatedAt  DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  creator     User?             @relation("CreatedBy", fields: [createdBy], references: [id])
+  validator   User?             @relation("ValidatedBy", fields: [validatedBy], references: [id])
+  options     QuestionOption[]
+  quizQuestions QuizQuestion[]
+  playerAnswers PlayerAnswer[]
+  riddle      Riddle?
+}
+
+model QuestionOption {
+  id         String  @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean @default(false)
+  order      Int
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+// ============================================
+// QUIZ SYSTEM
+// ============================================
+
+model Quiz {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  category     String
+  difficulty   String   // BEGINNER, EASY, MEDIUM, HARD, EXPERT, MASTER, LEGEND
+  language     String   @default("FR") // FR, HT, EN, ES
+  questionCount Int
+  timeLimit    Int?     // total time in seconds
+  isPublished  Boolean  @default(false)
+  createdBy    String
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  creator     User          @relation(fields: [createdBy], references: [id])
+  questions   QuizQuestion[]
+  gameSessions GameSession[]
+}
+
+model QuizQuestion {
+  id        String @id @default(cuid())
+  quizId    String
+  questionId String
+  order     Int
+
+  quiz     Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, questionId])
+  @@index([quizId])
+  @@index([questionId])
+}
+
+// ============================================
+// GAME SYSTEM
+// ============================================
+
+model GameSession {
+  id          String     @id @default(cuid())
+  userId      String
+  gameType    String     // QUIZ, RIDDLE, SUDOKU, ENIGMA
+  quizId      String?
+  score       Int        @default(0)
+  maxScore    Int?
+  startedAt   DateTime   @default(now())
+  completedAt DateTime?
+  status      String     @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+
+  // Relations
+  user        User          @relation(fields: [userId], references: [id])
+  quiz        Quiz?         @relation(fields: [quizId], references: [id])
+  answers     PlayerAnswer[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model PlayerAnswer {
+  id            String      @id @default(cuid())
+  gameSessionId String
+  questionId    String
+  answer        String
+  isCorrect     Boolean
+  pointsEarned  Int         @default(0)
+  responseTime  Int         // in milliseconds
+  createdAt     DateTime    @default(now())
+
+  // Relations
+  gameSession GameSession @relation(fields: [gameSessionId], references: [id], onDelete: Cascade)
+  question    Question    @relation(fields: [questionId], references: [id])
+
+  @@index([gameSessionId])
+  @@index([questionId])
+}
+
+// ============================================
+// RIDDLES SYSTEM
+// ============================================
+
+model Riddle {
+  id          String   @id @default(cuid())
+  questionId  String   @unique
+  riddleText  String
+  answer      String
+  hints       String   // JSON string for hints array
+  difficulty  String   // BEGINNER, EASY, MEDIUM, HARD, EXPERT, MASTER, LEGEND
+  timeLimit   Int?     // in seconds
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// SUDOKU SYSTEM
+// ============================================
+
+model Sudoku {
+  id          String     @id @default(cuid())
+  size        String     // SUDOKU_4X4, SUDOKU_6X6, SUDOKU_9X9
+  difficulty  String     // BEGINNER, EASY, MEDIUM, HARD, EXPERT, MASTER, LEGEND
+  puzzle      String     // JSON string for puzzle
+  solution    String     // JSON string for solution
+  createdAt   DateTime   @default(now())
+
+  gameSessions SudokuGameSession[]
+}
+
+model SudokuGameSession {
+  id          String     @id @default(cuid())
+  sudokuId    String
+  userId      String
+  currentState String   // JSON string for current state
+  startedAt   DateTime   @default(now())
+  completedAt DateTime?
+  status      String     @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, ABANDONED
+  mistakes    Int        @default(0)
+  timeElapsed Int        @default(0) // in seconds
+
+  sudoku Sudoku @relation(fields: [sudokuId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([sudokuId])
+}
+
+// ============================================
+// LEADERBOARD SYSTEM
+// ============================================
+
+model LeaderboardEntry {
+  id         String         @id @default(cuid())
+  userId     String
+  type       String         // DAILY, WEEKLY, MONTHLY, ALL_TIME, FRIENDS, GLOBAL, CATEGORY
+  category   String?
+  score      Int
+  rank       Int
+  period     DateTime       // For time-based leaderboards
+  createdAt  DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([period])
+  @@unique([userId, type, category, period])
+}
+
+// ============================================
+// SCORING CONFIGURATION
+// ============================================
+
+model ScoringConfig {
+  id               String   @id @default(cuid())
+  basePoints       Int      @default(10)
+  difficultyMultiplier String // JSON string for difficulty multipliers
+  timeBonus        Int      @default(5)
+  streakBonus      Int      @default(10)
+  perfectBonus     Int      @default(20)
+  hintPenalty      Int      @default(5)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
