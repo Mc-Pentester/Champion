@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
+import Link from "next/link"
 
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions as any)
 
-  if (!session || (session.user as any).role !== "ADMIN") {
+  if (!session || (session as any).user?.role !== "ADMIN") {
     redirect("/")
   }
 
@@ -20,41 +21,41 @@ export default async function AdminPage() {
 
         {/* Admin Navigation */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <a href="/admin/questions" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <Link href="/admin/questions" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="text-3xl mb-2">❓</div>
             <div className="font-semibold text-gray-800">Gestion des Questions</div>
             <div className="text-sm text-gray-600">Créer, modifier, valider</div>
-          </a>
+          </Link>
 
-          <a href="/admin/statistics" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <Link href="/admin/statistics" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="text-3xl mb-2">📊</div>
             <div className="font-semibold text-gray-800">Statistiques</div>
-            <div className="text-sm text-gray-600">Vue d'ensemble du contenu</div>
-          </a>
+            <div className="text-sm text-gray-600">Vue d&apos;ensemble du contenu</div>
+          </Link>
 
-          <a href="/admin/users" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <Link href="/admin/users" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="text-3xl mb-2">👥</div>
             <div className="font-semibold text-gray-800">Utilisateurs</div>
             <div className="text-sm text-gray-600">Gestion des comptes</div>
-          </a>
+          </Link>
 
-          <a href="/admin/quizzes" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <Link href="/admin/quizzes" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="text-3xl mb-2">📝</div>
             <div className="font-semibold text-gray-800">Quiz</div>
             <div className="text-sm text-gray-600">Créer des quiz</div>
-          </a>
+          </Link>
 
-          <a href="/admin/riddles" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <Link href="/admin/riddles" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="text-3xl mb-2">🤔</div>
             <div className="font-semibold text-gray-800">Devinettes</div>
             <div className="text-sm text-gray-600">Gérer les devinettes</div>
-          </a>
+          </Link>
 
-          <a href="/admin/sudoku" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+          <Link href="/admin/sudoku" className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             <div className="text-3xl mb-2">🧩</div>
             <div className="font-semibold text-gray-800">Sudoku</div>
             <div className="text-sm text-gray-600">Gérer les grilles</div>
-          </a>
+          </Link>
         </div>
 
         {/* Quick Stats */}
@@ -82,9 +83,9 @@ export default async function AdminPage() {
 
         {/* Back to Home */}
         <div className="mt-6">
-          <a href="/" className="text-indigo-600 hover:text-indigo-800">
-            ← Retour à l'accueil
-          </a>
+          <Link href="/" className="text-indigo-600 hover:text-indigo-800">
+            ← Retour à l&apos;accueil
+          </Link>
         </div>
       </div>
     </div>

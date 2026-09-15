@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { SudokuService } from "@/services/SudokuService"
 
 // GET /api/sudoku/session/[id] - Get Sudoku session
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = (session.user as any).id
+    const userId = (session as any).user.id
     const gameSession = await SudokuService.getSession(params.id)
 
     if (!gameSession) {
@@ -36,16 +37,17 @@ export async function GET(
 // POST /api/sudoku/session/[id]/move - Make a move in Sudoku
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = (session.user as any).id
+    const userId = (session as any).user.id
     const gameSession = await SudokuService.getSession(params.id)
 
     if (!gameSession) {
@@ -74,16 +76,17 @@ export async function POST(
 // DELETE /api/sudoku/session/[id] - Abandon Sudoku session
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = (session.user as any).id
+    const userId = (session as any).user.id
     const gameSession = await SudokuService.getSession(params.id)
 
     if (!gameSession) {

@@ -95,3 +95,12 @@ export enum UserRole {
   ADMIN = "ADMIN",
   MODERATOR = "MODERATOR"
 }
+
+// Question Option Interface
+export interface QuestionOption {
+  id: string
+  questionId: string
+  text: string
+  isCorrect: boolean
+  order: number
+}

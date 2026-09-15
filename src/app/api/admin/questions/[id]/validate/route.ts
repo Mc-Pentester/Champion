@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { QuestionBankService } from "@/services/QuestionBankService"
 
 // POST /api/admin/questions/[id]/validate - Validate or reject a question
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
-    if (!session || (session.user as any).role !== "ADMIN") {
+    if (!session || (session as any).user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
-    const validatorId = (session.user as any).id
+    const validatorId = (session as any).user.id
 
     const question = await QuestionBankService.validateQuestion(
       params.id,

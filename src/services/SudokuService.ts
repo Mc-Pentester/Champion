@@ -237,7 +237,7 @@ export class SudokuService {
    * Get random Sudoku puzzle
    */
   static async getRandomPuzzle(size?: SudokuSize, difficulty?: Difficulty) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (size) where.size = size
     if (difficulty) where.difficulty = difficulty
@@ -308,19 +308,7 @@ export class SudokuService {
     return true
   }
 
-  /**
-   * Check if a puzzle is complete
-   */
-  static isPuzzleComplete(current: number[][], solution: number[][]): boolean {
-    for (let row = 0; row < current.length; row++) {
-      for (let col = 0; col < current[row].length; col++) {
-        if (current[row][col] !== solution[row][col]) {
-          return false
-        }
-      }
-    }
-    return true
-  }
+
 
   // Helper methods
 

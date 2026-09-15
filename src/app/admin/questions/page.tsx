@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 
 export default async function AdminQuestionsPage() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions as any)
 
-  if (!session || (session.user as any).role !== "ADMIN") {
+  if (!session || (session as any).user?.role !== "ADMIN") {
     redirect("/")
   }
 

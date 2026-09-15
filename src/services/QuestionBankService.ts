@@ -111,7 +111,7 @@ export class QuestionBankService {
    * Filter questions based on criteria
    */
   static async getQuestions(filter: QuestionFilter) {
-    const where: any = {}
+    const where: Record<string, unknown> = {}
 
     if (filter.category) where.category = filter.category
     if (filter.subcategory) where.subcategory = filter.subcategory
@@ -145,10 +145,12 @@ export class QuestionBankService {
    * Update question
    */
   static async updateQuestion(id: string, data: Partial<QuestionData>) {
+    const { options: _options, ...questionData } = data
+    
     return await prisma.question.update({
       where: { id },
       data: {
-        ...data,
+        ...questionData,
         status: QuestionStatus.DRAFT, // Reset to draft on update
         updatedAt: new Date()
       },

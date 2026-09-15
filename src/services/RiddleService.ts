@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { QuestionBankService } from "./QuestionBankService"
 import { ScoringService } from "./ScoringService"
-import { Difficulty, QuestionType } from "@/types/question"
+import { Difficulty, QuestionType, Language, QuestionStatus } from "@/types/question"
 
 export interface RiddleData {
   riddleText: string
@@ -33,7 +33,7 @@ export class RiddleService {
         category: "DEVINETTES",
         subcategory: "DEVINETTES_CLASSIQUES",
         difficulty: data.difficulty,
-        language: "FR",
+        language: Language.FR,
         questionText: data.riddleText,
         explanation: `Réponse: ${data.answer}`,
         points: 20,
@@ -144,7 +144,7 @@ export class RiddleService {
 
     const scoreResult = await ScoringService.calculateScore({
       basePoints: riddle.question.points,
-      difficulty: riddle.difficulty as any,
+      difficulty: riddle.difficulty as Difficulty,
       hintsUsed: totalPenalty
     })
 
@@ -164,7 +164,7 @@ export class RiddleService {
       category: "DEVINETTES",
       type: QuestionType.RIDDLE,
       difficulty,
-      status: "APPROVED" as any,
+      status: QuestionStatus.APPROVED,
       limit: 10
     })
 

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { GameType, GameStatus } from "@/types/question"
+import { GameType, GameStatus, Difficulty, QuestionOption } from "@/types/question"
 import { ScoringService } from "./ScoringService"
 import { QuestionBankService } from "./QuestionBankService"
 
@@ -13,7 +13,7 @@ export interface AnswerData {
   gameSessionId: string
   questionId: string
   answer: string
-  isCorrect: boolean
+  isCorrect?: boolean
   responseTime: number
 }
 
@@ -89,19 +89,23 @@ export class GameService {
       throw new Error("Game session not found")
     }
 
-    // Get question details for scoring
+    // Get question details for scoring and validation
     const question = await QuestionBankService.getQuestionById(data.questionId, true)
     
     if (!question) {
       throw new Error("Question not found")
     }
 
+    // Determine if answer is correct (server-side validation)
+    const correctOption = question.options?.find((opt: QuestionOption) => opt.isCorrect)
+    const isCorrect = correctOption?.id === data.answer
+
     // Calculate score
     const scoreResult = await ScoringService.calculateScore({
       basePoints: question.points,
-      difficulty: question.difficulty as any,
+      difficulty: question.difficulty as Difficulty,
       responseTime: data.responseTime,
-      timeLimit: question.timeLimit
+      timeLimit: question.timeLimit ?? undefined
     })
 
     // Save the answer
@@ -110,8 +114,8 @@ export class GameService {
         gameSessionId: data.gameSessionId,
         questionId: data.questionId,
         answer: data.answer,
-        isCorrect: data.isCorrect,
-        pointsEarned: data.isCorrect ? scoreResult.points : 0,
+        isCorrect,
+        pointsEarned: isCorrect ? scoreResult.points : 0,
         responseTime: data.responseTime
       }
     })
@@ -127,7 +131,7 @@ export class GameService {
     })
 
     // Update user progression if correct
-    if (data.isCorrect) {
+    if (isCorrect) {
       await ScoringService.updateProgression(gameSession.userId, answer.pointsEarned)
       await ScoringService.updateStreak(gameSession.userId, true)
     } else {
@@ -160,12 +164,14 @@ export class GameService {
     const stats = await ScoringService.calculateGameScore(gameSessionId)
 
     // Update max score
-    await prisma.gameSession.update({
-      where: { id: gameSessionId },
-      data: {
-        maxScore: stats.totalPoints
-      }
-    })
+    if (stats.totalPoints !== null) {
+      await prisma.gameSession.update({
+        where: { id: gameSessionId },
+        data: {
+          maxScore: stats.totalPoints
+        }
+      })
+    }
 
     return {
       gameSession,

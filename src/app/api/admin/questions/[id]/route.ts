@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { QuestionBankService } from "@/services/QuestionBankService"
 
 // GET /api/admin/questions/[id] - Get a specific question
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
-    if (!session || (session.user as any).role !== "ADMIN") {
+    if (!session || (session as any).user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -31,12 +32,13 @@ export async function GET(
 // PUT /api/admin/questions/[id] - Update a question
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
-    if (!session || (session.user as any).role !== "ADMIN") {
+    if (!session || (session as any).user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -54,12 +56,13 @@ export async function PUT(
 // DELETE /api/admin/questions/[id] - Delete a question
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
-    if (!session || (session.user as any).role !== "ADMIN") {
+    if (!session || (session as any).user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

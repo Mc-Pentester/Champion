@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { GameService } from "@/services/GameService"
 
 // POST /api/game/answer - Submit an answer
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
       gameSessionId: body.gameSessionId,
       questionId: body.questionId,
       answer: body.answer,
-      isCorrect: body.isCorrect,
       responseTime: body.responseTime
     })
 

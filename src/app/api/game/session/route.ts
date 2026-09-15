@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { GameService } from "@/services/GameService"
 import { GameType } from "@/types/question"
@@ -7,14 +7,14 @@ import { GameType } from "@/types/question"
 // POST /api/game/session - Create a new game session
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
-    const userId = (session.user as any).id
+    const userId = (session as any).user.id
 
     const gameSession = await GameService.createSession({
       userId,
@@ -30,15 +30,15 @@ export async function POST(request: NextRequest) {
 }
 
 // GET /api/game/session - Get active session for user
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = (session.user as any).id
+    const userId = (session as any).user.id
     const activeSession = await GameService.getActiveSession(userId)
 
     return NextResponse.json({ session: activeSession })

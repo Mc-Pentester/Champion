@@ -6,7 +6,6 @@ import {
   QuestionType, 
   Difficulty, 
   Language,
-  GameType,
   SudokuSize
 } from '../src/types/question'
 
@@ -38,7 +37,7 @@ async function main() {
       email: 'user@champion.com',
       name: 'Utilisateur Test',
       password: userPassword,
-      role: 'USER'
+      role: 'PLAYER'
     }
   })
   console.log('✅ Test user created')
@@ -302,7 +301,7 @@ async function main() {
   console.log('✅ Sudoku puzzles created')
 
   // Create a quiz
-  const quiz = await prisma.quiz.create({
+  await prisma.quiz.create({
     data: {
       title: 'Quiz Français - Débutant',
       description: 'Testez vos connaissances en français',

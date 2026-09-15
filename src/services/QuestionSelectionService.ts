@@ -16,7 +16,7 @@ export class QuestionSelectionService {
    * Select questions automatically based on criteria
    */
   static async selectQuestions(criteria: SelectionCriteria) {
-    const where: any = {
+    const where: Record<string, unknown> = {
       status: QuestionStatus.APPROVED // Only select approved questions
     }
 
@@ -46,7 +46,7 @@ export class QuestionSelectionService {
           }
         }
       },
-      take: criteria.numberOfQuestions * 2 // Get more than needed for variety
+      take: criteria.numberOfQuestions * 2, // Get more than needed for variety
       orderBy: {
         createdAt: 'desc' // Get newer questions first
       }
@@ -162,7 +162,7 @@ export class QuestionSelectionService {
    * Check if sufficient questions are available
    */
   static async checkAvailability(criteria: SelectionCriteria): Promise<boolean> {
-    const where: any = {
+    const where: Record<string, unknown> = {
       status: QuestionStatus.APPROVED
     }
 
@@ -187,7 +187,7 @@ export class QuestionSelectionService {
    * Get available question counts by category
    */
   static async getAvailableCounts(category?: string) {
-    const where: any = {
+    const where: Record<string, unknown> = {
       status: QuestionStatus.APPROVED
     }
 

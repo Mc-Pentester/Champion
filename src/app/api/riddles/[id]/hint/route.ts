@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { RiddleService } from "@/services/RiddleService"
 
 // GET /api/riddles/[id]/hint?index=0 - Get a hint for a riddle
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as any)
     
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

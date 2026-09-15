@@ -7,10 +7,11 @@ describe('QuestionBankService', () => {
   let testUserId: string
 
   beforeEach(async () => {
-    // Create a test user
+    // Create a test user with truly unique email
+    const timestamp = Date.now() + Math.random()
     const user = await prisma.user.create({
       data: {
-        email: `test-${Date.now()}@example.com`,
+        email: `test-${timestamp}@example.com`,
         name: 'Test User',
         password: 'hashedpassword',
         role: 'ADMIN'
@@ -21,12 +22,16 @@ describe('QuestionBankService', () => {
 
   afterEach(async () => {
     // Clean up test data
-    await prisma.question.deleteMany({
-      where: { createdBy: testUserId }
-    })
-    await prisma.user.delete({
-      where: { id: testUserId }
-    })
+    try {
+      await prisma.question.deleteMany({
+        where: { createdBy: testUserId }
+      })
+      await prisma.user.delete({
+        where: { id: testUserId }
+      })
+    } catch {
+      // User might not exist if test failed before creation
+    }
   })
 
   describe('createQuestion', () => {
